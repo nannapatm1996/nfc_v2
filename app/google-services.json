@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "780724555903",
+    "project_id": "nfc-hotseat",
+    "storage_bucket": "nfc-hotseat.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:780724555903:android:23227ca08feabf7a27af4a",
+        "android_client_info": {
+          "package_name": "com.example.nfc"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "780724555903-658hgqdbimdm0utpcql2p4rqvf4eu3pd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAxrZ6yHWSRyIOQ7Zm8nR0fdu4MDo2LLv8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "780724555903-658hgqdbimdm0utpcql2p4rqvf4eu3pd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
