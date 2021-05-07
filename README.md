@@ -3,11 +3,13 @@
 Seat Booking application Trigger with NFC
  
 **Data Model**
+-------------
 
 1. User: Model on property of users (index, tagid, firstname, lastname, seatname)
 2. Seat: Model on property of seats (seatName, availability)
 
 **Main Activity**
+------
 1. enable NFC Reader Mode 
 2. Read of Firebase to query for found tags 
    - If tag found then it will go to "SeatBookingActivity" 
@@ -15,6 +17,7 @@ Seat Booking application Trigger with NFC
 4. Show tagid on UI
 
 **NFCCardReader**
+-----
 
 ***Functions***
 
@@ -25,6 +28,7 @@ _2. bytetoHexString_
    - convert to hex number
 
 **SeatBooking Activity**
+----
 
 ***Logic***
 1. Choose the Seat (Toggle Imageview and keep state)
@@ -42,7 +46,7 @@ _2. bytetoHexString_
    - call function: SignalPhone 
    - Endprocess
 
-**Functions**
+***Functions***
 1. SignalPhone
    - Volley a POST Request to specified URL
 
