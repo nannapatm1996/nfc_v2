@@ -129,7 +129,7 @@ public class seatbooking extends AppCompatActivity {
 
                     if (choose1 == 1L) {
 
-                        String deviceId = "SEP64AE0CF72FC7"; //Fetch from db
+                        String DeviceId = "SEP00279080B309"; //Fetch from db
                         String SeatNo = "1A";
 
 
@@ -140,7 +140,9 @@ public class seatbooking extends AppCompatActivity {
                                 onSeatSelectSeat(SeatNo, 3);
                                 onSeatSelectUser(tagId, SeatNo);
                                 Log.d("Seat",tagId+SeatNo);
-                                ReadSeatFirebase();
+                                //ReadSeatFirebase();
+                                URL = "http://10.120.51.11:8080/emapp/EMAppServlet?device=" + DeviceId + "&userid=nannapatm&seq=3690";
+                                SignalPhone(URL);
                                 Intent intent = new Intent(seatbooking.this, MainActivity.class);
                                 startActivity(intent);
                             }
@@ -156,8 +158,8 @@ public class seatbooking extends AppCompatActivity {
                             public void onClick(DialogInterface dialog, int which) {
                                 img2.setEnabled(false);
                                 //TODO: Write to Firebase Tag Seat A1, availability: 0/1
-                                URL = "http://10.120.51.11/emapp/EMAppServlet?device=" + DeviceId + "&userid=nannapatm&seq=3690";
-                                //SignalPhone(URL);
+                                URL = "http://10.120.51.11:8080/emapp/EMAppServlet?device=SEP00279080B309&userid=nannapatm&seq=3690";
+                                SignalPhone(URL);
                                 //Todo: Write to Firebase
                                 onSeatSelectSeat(SeatNo, 3);
                                 onSeatSelectUser(tagId, SeatNo);
@@ -198,13 +200,13 @@ public class seatbooking extends AppCompatActivity {
                     public void onResponse(String response) {
                         // Display the first 500 characters of the response string.
                         //textView.setText("Response is: "+ response.substring(0,500));
-                        Log.d("Volley", "Operation Successful");
+                        Log.d("VolleySuccess", "Operation Successful");
                     }
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
                 //textView.setText("That didn't work!");
-                Log.e("error", error.toString());
+                Log.e("VolleyError", error.toString());
             }
         });
 
