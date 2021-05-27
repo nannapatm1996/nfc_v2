@@ -2,20 +2,29 @@ package com.example.nfc.Model;
 
 import com.google.firebase.database.Exclude;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Seat {
+public class Seat implements Serializable {
 
 
     public String seatName, deviceId;
-    public int availability;
+    public Long availability;
+    public int Gcolor;
+    public boolean isChecked = false;
 
+    public Seat(String seat){
+        seatName = seat;
+        //Gcolor = color;
+
+
+    }
     public Seat(){
 
     }
 
-    public Seat(String seatName, String deviceId, int availability){
+    public Seat(String seatName, String deviceId, Long availability){
         this.seatName = seatName;
         this.deviceId = deviceId;
         this.availability = availability;
@@ -26,6 +35,9 @@ public class Seat {
     public String getSeatName(){
         return seatName;
     }
+    public int getColor(){
+        return Gcolor;
+    }
 
     public void setSeatName(String SeatName){
         this.seatName = SeatName;
@@ -35,8 +47,19 @@ public class Seat {
         return deviceId;
     }
 
-    public int getAvailability(){
+    public Long getAvailability(){
         return availability;
+    }
+
+    public void setAvailability(Long availability){
+        this.availability = availability;
+    }
+
+    public boolean isChecked(){
+        return isChecked;
+    }
+    public void setChecked(boolean checked){
+        isChecked = checked;
     }
 
 

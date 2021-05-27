@@ -3,15 +3,27 @@ package com.example.nfc;
 import android.graphics.Bitmap;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
+import android.os.AsyncTask;
 import android.os.Build;
+import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
+import com.example.nfc.Adapter.ConnectionHelper;
 import com.example.nfc.Model.Seat;
 import com.example.nfc.Model.User;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,6 +34,8 @@ public class NFCCardReader implements NfcAdapter.ReaderCallback {
     private String tagId;
     private String index;
     private Bitmap bmp;
+    private Map<String, Long> seatTest = new HashMap<>();
+    private Map<String, String> seatDevice = new HashMap<>();
     //private Serial serial;
     public NFCCardReader(MainActivity mainActivity) {
     /*protected void onCreate(Bundle savedInstanceState) {
@@ -32,37 +46,23 @@ public class NFCCardReader implements NfcAdapter.ReaderCallback {
        // mainActivity.displayTagId(tagId);
 
 
-
     }
 
     @Override
     //Display on Current page
     public void onTagDiscovered(Tag tag) {
         tagId = bytesToHexString(tag.getId());
+        //tagId= getDecimal(tagId);
+        //tagId= bytesToDecimal(tag.getId());
         mainActivity.displayTagId(tagId);
-
-
-        /*if (tagId.equals("0xc40ff93e")){
-            mainActivity.displayTagId("Kijjawat Poopong");
-        }
-        else {
-            mainActivity.displayTagId("Unknown");
-        }*/
-        //final String tagId = getTagId();
-        //mainActivity.displayTagId(tagId);
-        //index = "10110067";
-        //TODO: 1. Flash Tag 2.Query data in FB 3. If found --> Fetch at Tag<User>, if not Found --> Check in Index
-
-        //writeNewTag("10110067",tagId,"Nannapat","Meemongkolkiat");
-        //writeNewSeat("1A", "SEP64AE0CF72FC7", 0);
-        //writeNewSeat("2A", "SEP64AE0CF72FC7", 0);
-        //Read by using tagId
-
+        findUsername findUsername = new findUsername();
+        findUsername.execute("");
 
     }
 
     private String bytesToHexString(byte[] src) {
-        StringBuilder stringBuilder = new StringBuilder("0x");
+        StringBuilder stringBuilder = new StringBuilder("");
+        long dec =0L;
         if (src == null || src.length <= 0) {
             return null;
         }
@@ -73,10 +73,71 @@ public class NFCCardReader implements NfcAdapter.ReaderCallback {
             buffer[1] = Character.forDigit(src[i] & 0x0F, 16);
             System.out.println(buffer);
             stringBuilder.append(buffer);
+            dec = Long.parseLong(stringBuilder.toString(),16);
+            }
+
+        return String.valueOf(dec);
+    }
+
+    public class findUsername extends AsyncTask<String, Void, String> {
+
+        String id, primarypin, adUser, nameDesc;
+
+        @Override
+        protected void onPreExecute(){
+            super.onPreExecute();
+            id =tagId;
         }
 
-        return stringBuilder.toString();
+        //select cas_primarypin_ext.x_id, cas_primarypin_ext.primarypin, cat_validation.name, cat_validation.description
+        //from cas_primarypin_ext, cat_validation
+        //where cas_primarypin_ext.primarypin = '2218065470' AND cas_primarypin_ext.x_id = cat_validation.id
+
+        @Override
+        protected String doInBackground(String... strings) {
+            String result = null;
+            try{
+                ConnectionHelper con = new ConnectionHelper();
+                Connection connect = ConnectionHelper.CONN();
+
+                String query = "select cas_primarypin_ext.x_id, cas_primarypin_ext.primarypin, cat_validation.name, cat_validation.description from cas_primarypin_ext, cat_validation where cas_primarypin_ext.primarypin ="+ "'" +
+                        id + "'"+ "AND cas_primarypin_ext.x_id = cat_validation.id ";
+
+                //PreparedStatement preparedStatement = connect.prepareStatement(query);
+
+                //preparedStatement.executeQuery();
+                Log.d("Query",query);
+
+                Statement stmt = connect.createStatement();
+                ResultSet rs = stmt.executeQuery(query);
+                //Log.d("conn_result",rs.getString("x_id"));
+                while(rs.next()){
+                    String re = rs.getString(3);
+                    System.out.println("result "+re);
+                }
+
+                //preparedStatement.close();
+
+                return "successful connection";
+            }
+            catch (SQLException e){
+                e.printStackTrace();
+                return e.getMessage().toString();
+            }catch (Exception e){
+                return "Exception. Check DB";
+            }
+
+        }
+        @Override
+        protected  void onPostExecute(String result){
+            if(result.equals("successful connection")){
+                Log.d("conn","connection Success");
+            }
+        }
     }
+
+
+
 
    /* public void writeNewTag(String index, String tagId,String fName, String LName){
        // key = mDatabase.child("tag").push().getKey();
@@ -92,11 +153,11 @@ public class NFCCardReader implements NfcAdapter.ReaderCallback {
 
     }*/
 
-   /* private void showData(DataSnapshot dataSnapshot) {
+/*    private void showData(DataSnapshot dataSnapshot) {
         for(DataSnapshot ds : dataSnapshot.getChildren()){
-            Serial tag = new Serial();
-            //User user = new User();
-            tag.setIndex();
+            //Serial tag = new Serial();
+            User user = new User();
+            //tag.setIndex();
             alarm.setName(ds.child(userID).getValue(Alarm.class).getName()); //set the name
             alarm.setFormat(ds.child(userID).getValue(Alarm.class).getFormat());
             alarm.setAddReminder(ds.child(userID).getValue(Alarm.class).getAddReminder());
@@ -112,7 +173,7 @@ public class NFCCardReader implements NfcAdapter.ReaderCallback {
         }
     }*/
 
-    public void writeNewSeat(String SeatName, String deviceId, int availability) {
+    public void writeNewSeat(String SeatName, String deviceId, Long availability) {
         // key = mDatabase.child("tag").push().getKey();
         //User user = new User(index, tagId, fName, LName, Seat);
 
@@ -122,9 +183,64 @@ public class NFCCardReader implements NfcAdapter.ReaderCallback {
         Map<String, Object> SeatValues = seat.toMap();
 
         Map<String, Object> childUpdates = new HashMap<>();
-        childUpdates.put("/Seats/" + key, SeatValues);
+        childUpdates.put("/Users/" + key, SeatValues);
         mDatabase.updateChildren(childUpdates);
     }
+
+/*    private void ReadUserFirebase() {
+
+        DatabaseReference mSnap = FirebaseDatabase.getInstance().getReference().child("Users");
+        mDatabase.child("Users").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+
+                Seat seat = dataSnapshot.getValue(Seat.class);
+                String key = dataSnapshot.getKey();
+                //Map<String, Object> SeatName = (Map<String, Object>) dataSnapshot.child(key).child("SeatName").getValue();
+
+                for(DataSnapshot ds : dataSnapshot.getChildren()){
+
+                    Log.d("key", ds.getKey());
+                    String SeatName = ds.child("SeatName").getValue(String.class);
+                    //long avaiability = ds.child("availability").getValue(Long.class);
+                    //String deviceId = ds.child("deviceId").getValue(String.class);
+                    //Log.d("finalSeat", SeatName + avaiability);
+                    //seatTest.put(SeatName,avaiability);
+                    //seatDevice.put(SeatName,deviceId);
+                   // Log.d("Hashmap","hash "+seatTest);
+
+                    for (Map.Entry<String, Long> entry : seatTest.entrySet()){
+                        Log.d("hashmapfor", entry.getKey()+ entry.getValue());
+                        if(entry.getKey().equals("1A")){
+                            choose1 = entry.getValue();
+                            Log.d("choose1","Choose1: "+choose1);
+                            if(choose1==3L){
+                                img1.setImageResource(R.drawable.kermit_the_frog);
+                                img1.setEnabled(false);
+                            }
+                        }
+                        else{
+                            choose2 = entry.getValue();
+                            Log.d("choose2","Choose2: "+choose2);
+                            if(choose2==3L){
+                                img2.setImageResource(R.drawable.kermit_the_frog);
+                                img2.setEnabled(false);
+                            }
+
+                        }
+                    }
+                    // seat.getAvailability()
+                }
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+                Log.d("TAG", error.getMessage()); //Don't ignore potential errors!
+            }
+        });
+    }*/
 
 
 

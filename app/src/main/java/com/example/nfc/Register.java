@@ -19,7 +19,7 @@ import java.util.Map;
 
 public class Register extends AppCompatActivity {
 
-    private String firstname, lastname, index,tagid;
+    private String firstname, lastname, index,tagid,dept, zone;
     private EditText et_lastname, et_firstname, et_index;
     private TextView et_tagid;
     private DatabaseReference mDatabase;
@@ -51,7 +51,7 @@ public class Register extends AppCompatActivity {
                 lastname = et_lastname.getText().toString();
                 index = et_index.getText().toString();
                 String Seat = "null";
-                writeNewTag(index,tagid,firstname,lastname,Seat);
+                writeNewTag(index,tagid,firstname,lastname,Seat,dept,zone);
                 Intent intent = new Intent(Register.this, MainActivity.class);
                 startActivity(intent);
             }
@@ -63,10 +63,10 @@ public class Register extends AppCompatActivity {
 
     }
 
-    public void writeNewTag(String index, String tagId,String fName, String LName,String Seat){
+    public void writeNewTag(String index, String tagId,String fName, String LName,String Seat,String dept, String zone){
         // key = mDatabase.child("tag").push().getKey();
         String key = mDatabase.child("Users").push().getKey();
-        User user = new User(index,tagId,fName,LName, Seat);
+        User user = new User(index,tagId,fName,LName, Seat,dept,zone);
         Map<String, Object> UserValues = user.toMap();
        // mDatabase.child(tagId).setValue(user);
 
@@ -84,7 +84,7 @@ public class Register extends AppCompatActivity {
 
     }
 
-    public void writeNewSeat(String SeatName, String deviceId, int availability) {
+    public void writeNewSeat(String SeatName, String deviceId, Long availability) {
         // key = mDatabase.child("tag").push().getKey();
         //User user = new User(index, tagId, fName, LName, Seat);
 

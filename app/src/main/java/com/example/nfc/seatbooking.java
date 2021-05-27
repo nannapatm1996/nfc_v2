@@ -33,6 +33,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.net.URL;
 import java.security.Key;
 import java.util.HashMap;
@@ -45,9 +47,10 @@ public class seatbooking extends AppCompatActivity {
     private ImageView img1, img2, img3, img4;
     private TextView DeviceId;
     private Long choose1 = 0L, choose2 = 0L, choose3 = 0L, choose4 = 0L;
-    private String URL, tagId;
+    private String URL, tagId,globalDeviceId;
     private DatabaseReference mDatabase;
     private Map<String, Long> seatTest = new HashMap<>();
+    private Map<String, String> seatDevice = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,23 +64,68 @@ public class seatbooking extends AppCompatActivity {
         AlertDialog.Builder alertBuilder;
 
         TextView txName = (TextView) findViewById(R.id.txName);
-        img1 = (ImageView) findViewById(R.id.img1);
+        /*img1 = (ImageView) findViewById(R.id.img1);
         img2=  (ImageView) findViewById(R.id.img2);
         img3 = (ImageView) findViewById(R.id.img3);
-        img4 = (ImageView) findViewById(R.id.img4);
+        img4 = (ImageView) findViewById(R.id.img4);*/
+        //Button btnconfirmSeat = (Button) findViewById(R.id.btnSubmitSeat);
         Button btnconfirmSeat = (Button) findViewById(R.id.btnSubmitSeat);
+        Button btnZoneGA = (Button) findViewById(R.id.btnZoneGA);
+        Button btnZoneGB = (Button) findViewById(R.id.btnZoneGB);
+        Button btnZoneGC = (Button) findViewById(R.id.btnZoneGC);
+
+        Button btnZoneMA = (Button) findViewById(R.id.btnZoneMA);
+        Button btnZoneMB = (Button) findViewById(R.id.btnZoneMB);
+
+        btnZoneMA.setVisibility(View.GONE);
+        btnZoneMB.setVisibility(View.GONE);
 
         txName.setText(fname + " " + lname);
         alertBuilder = new AlertDialog.Builder(this);
 
+
+
+        btnZoneGA.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(seatbooking.this, seatSelecttion.class);
+                intent.putExtra("zone", "A");
+                intent.putExtra("columnNum", 4);
+                intent.putExtra("tagId",tagId);
+                startActivity(intent);
+            }
+        });
+
+        btnZoneGB.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(seatbooking.this, seatSelecttion.class);
+                intent.putExtra("zone", "B");
+                intent.putExtra("columnNum", 6);
+                startActivity(intent);
+            }
+        });
+
+        btnZoneGC.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(seatbooking.this, seatSelecttion.class);
+                intent.putExtra("zone", "C");
+                intent.putExtra("columnNum", 7);
+                startActivity(intent);
+            }
+        });
+
         //Set Up seat 1 time
         //writeNewSeat("1A", "SEP64AE0CF72FC7", 0);
         //writeNewSeat("2A", "SEP64AE0CF72FC7", 0);
-        ReadSeatFirebase();
+        //ReadSeatFirebase();
 
 
 
-        img1.setOnClickListener(new View.OnClickListener() {
+
+        //TOGGLE IMAGEVIEW
+       /* img1.setOnClickListener(new View.OnClickListener() {
             @Override
 
             public void onClick(View v) {
@@ -107,9 +155,9 @@ public class seatbooking extends AppCompatActivity {
                 }
 
             }
-        });
+        });*/
 
-        btnconfirmSeat.setOnClickListener(new View.OnClickListener() {
+        /*btnconfirmSeat.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 URL = "http://10.120.51.11/emapp/EMAppServlet?device=" + DeviceId + "&userid=nannapatm&seq=3690";
@@ -132,7 +180,6 @@ public class seatbooking extends AppCompatActivity {
                         String DeviceId = "SEP00279080B309"; //Fetch from db
                         String SeatNo = "1A";
 
-
                         alertBuilder.setMessage(fname + " " + lname + "Your seat is 1A").setNeutralButton("OK", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
@@ -151,14 +198,14 @@ public class seatbooking extends AppCompatActivity {
                         alert.show();
 
                     } else if (choose2 == 1) {
-                        String DeviceId = "SEP64AE0CF72FC7"; //Fetch from db
+                        String deviceId = "SEP64AE0CF72FC7"; // TODO: Change DeviceID Here!
                         String SeatNo = "2A";
                         alertBuilder.setMessage(fname + " " + lname + " Your seat is 2A").setNeutralButton("OK", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 img2.setEnabled(false);
                                 //TODO: Write to Firebase Tag Seat A1, availability: 0/1
-                                URL = "http://10.120.51.11:8080/emapp/EMAppServlet?device=SEP00279080B309&userid=nannapatm&seq=3690";
+                                URL = "http://10.120.51.11:8080/emapp/EMAppServlet?device="+deviceId+"&userid=nannapatm&seq=3690";
                                 SignalPhone(URL);
                                 //Todo: Write to Firebase
                                 onSeatSelectSeat(SeatNo, 3);
@@ -184,7 +231,7 @@ public class seatbooking extends AppCompatActivity {
 
 
             }
-        });
+        });*/
 
     }
 
@@ -214,7 +261,7 @@ public class seatbooking extends AppCompatActivity {
         queue.add(stringRequest);
     }
 
-    public void writeNewSeat(String SeatName, String deviceId, int availability) {
+    public void writeNewSeat(String SeatName, String deviceId, Long availability) {
         // key = mDatabase.child("tag").push().getKey();
         //User user = new User(index, tagId, fName, LName, Seat);
 
@@ -241,9 +288,9 @@ public class seatbooking extends AppCompatActivity {
         mDatabase.child("Users").child(tagId).updateChildren(updates);
     }
 
-    public void writeNewTag(String index, String tagId,String fName, String LName,String Seat) {
+    public void writeNewTag(String index, String tagId,String fName, String LName,String Seat, String dept, String zone) {
         // key = mDatabase.child("tag").push().getKey();
-        User user = new User(index, tagId, fName, LName, Seat);
+        User user = new User(index, tagId, fName, LName, Seat,dept, zone);
         mDatabase.child(tagId).setValue(user);
         // Map<String, Object> serialValues = serial.toMap();
 
@@ -254,23 +301,27 @@ public class seatbooking extends AppCompatActivity {
         mDatabase.child("Seats").child(SeatNo).updateChildren(updates);
     }
 
+    private void ReadUser(String tagId){
+        mDatabase.child("Users").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull @NotNull DataSnapshot snapshot) {
+                User user = snapshot.getValue(User.class);
+                String key = snapshot.getKey();
+
+                for (DataSnapshot ds : snapshot.getChildren()){
+
+                }
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull @NotNull DatabaseError error) {
+
+            }
+        });
+    }
+
     private void ReadSeatFirebase() {
-        //Read data from Firebase
-        //DatabaseReference SeatRef = FirebaseDatabase.getInstance().getReference();
-        /*ValueEventListener valueEventListener = new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                Seat seat = snapshot.getValue(Seat.class);
-
-                    Log.d("SeatChild", seat.getSeatName()+" "+seat.getAvailability());
-
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        };*/
         DatabaseReference mSnap = FirebaseDatabase.getInstance().getReference().child("Seats");
         mDatabase.child("Seats").addValueEventListener(new ValueEventListener() {
             @Override
@@ -285,10 +336,13 @@ public class seatbooking extends AppCompatActivity {
                     Log.d("key", ds.getKey());
                     String SeatName = ds.child("SeatName").getValue(String.class);
                     long avaiability = ds.child("availability").getValue(Long.class);
+                    String deviceId = ds.child("deviceId").getValue(String.class);
                     Log.d("finalSeat", SeatName + avaiability);
                     seatTest.put(SeatName,avaiability);
+                    seatDevice.put(SeatName,deviceId);
                     Log.d("Hashmap","hash "+seatTest);
-                    for (Map.Entry<String, Long> entry : seatTest.entrySet()){
+
+                    /*for (Map.Entry<String, Long> entry : seatTest.entrySet()){
                         Log.d("hashmapfor", entry.getKey()+ entry.getValue());
                         if(entry.getKey().equals("1A")){
                             choose1 = entry.getValue();
@@ -307,7 +361,7 @@ public class seatbooking extends AppCompatActivity {
                             }
 
                         }
-                    }
+                    }*/
                    // seat.getAvailability()
                 }
 
