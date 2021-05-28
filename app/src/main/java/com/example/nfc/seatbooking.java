@@ -60,6 +60,7 @@ public class seatbooking extends AppCompatActivity {
         String fname = getIntent().getStringExtra("fname");
         String lname = getIntent().getStringExtra("lname");
         tagId = getIntent().getStringExtra("tagid");
+        String zone = getIntent().getStringExtra("zone");
         mDatabase = FirebaseDatabase.getInstance().getReference();
         AlertDialog.Builder alertBuilder;
 
@@ -82,6 +83,26 @@ public class seatbooking extends AppCompatActivity {
 
         txName.setText(fname + " " + lname);
         alertBuilder = new AlertDialog.Builder(this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(seatbooking.this);
+        builder.setMessage("Your recommended zone is: "+zone+" Would you like to proceed to that zone?").setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Intent intent = new Intent(seatbooking.this, seatSelecttion.class);
+                intent.putExtra("zone", "A");
+                intent.putExtra("columnNum", 4);
+                intent.putExtra("tagId",tagId);
+                startActivity(intent);
+            }
+        }).setNegativeButton("No", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+
+                //Intent intent = new Intent(MainActivity.this, MainActivity.class);
+            }
+        });
+        AlertDialog alert = builder.create();
+        alert.show();
 
 
 
@@ -288,9 +309,9 @@ public class seatbooking extends AppCompatActivity {
         mDatabase.child("Users").child(tagId).updateChildren(updates);
     }
 
-    public void writeNewTag(String index, String tagId,String fName, String LName,String Seat, String dept, String zone) {
+    public void writeNewTag(String tagId, String name, String org, String division, String section, String username,String seatName,String eqtrack_id) {
         // key = mDatabase.child("tag").push().getKey();
-        User user = new User(index, tagId, fName, LName, Seat,dept, zone);
+        User user = new User(tagId,name,org,division,section,username,seatName,eqtrack_id);
         mDatabase.child(tagId).setValue(user);
         // Map<String, Object> serialValues = serial.toMap();
 

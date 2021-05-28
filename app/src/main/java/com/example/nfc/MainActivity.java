@@ -22,6 +22,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.nfc.Adapter.ConnectionHelper;
+import com.example.nfc.Model.User;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
@@ -94,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
         queue.add(stringRequest);
     }
 
-    private void onLogout(String tagId,String seatname){
+    private void onLogout(String tagId,final String seatname){
         mDatabase.child("Seats").child(seatname).get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DataSnapshot> task) {
@@ -125,7 +126,7 @@ public class MainActivity extends AppCompatActivity {
         mDatabase.child("Users").child(tagId).updateChildren(updates);
     }
 
-    public void displayTagId(final String tagId) {
+    public void displayTagId(final String tagId, final String name, final String division, final String org, final String section, final String eqTrack_id, final String username) {
         final TextView txtTagId = (TextView) findViewById(R.id.result);
         final ImageView Image = (ImageView) findViewById(R.id.imageView);
         runOnUiThread(new Runnable() {
@@ -136,9 +137,9 @@ public class MainActivity extends AppCompatActivity {
                 //intent.putExtra("tagid",tagId);
 
                 //String tagid = txtTagId.getText();
-                txtTagId.setText(tagId);
+                txtTagId.setText(tagId + name);
 
-
+                //TODO: change to find in db
                 mDatabase.child("Users").child(tagId).get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
                     @Override
                     public void onComplete(@NonNull Task<DataSnapshot> task) {
@@ -147,29 +148,39 @@ public class MainActivity extends AppCompatActivity {
                         } else {
                             Log.d("firebase", String.valueOf(task.getResult().getValue()));
                             String value = String.valueOf(task.getResult().getValue());
-                            String fname = String.valueOf(task.getResult().child("firstname").getValue());
-                            String lname = String.valueOf(task.getResult().child("lastname").getValue());
+                            String name = String.valueOf(task.getResult().child("name").getValue());
+                            String division = String.valueOf(task.getResult().child("division").getValue());
                             String seatname = String.valueOf(task.getResult().child("SeatName").getValue());
-                            if (fname.equals("null")) {
-                                //mainActivity.displayTagId(tagId,fname);
+                            String tagId = String.valueOf(task.getResult().child("tagId").getValue());
+                           // String dept = String.valueOf(task.getResult().child("dept").getValue());
+                            //String zone = String.valueOf(task.getResult().child("zone").getValue());
+                            Log.d("tagid",tagId);
+                            if (tagId.equals("null")) {
 
-                                Intent intent = new Intent(MainActivity.this, Register.class);
-                                intent.putExtra("tagid", tagId);
-                                startActivity(intent);
-                            } else if (seatname.equals("null")) {
+                                //seatname = "null";
+                                //writeNewTag(tagId,name,org,division,section,username,seatname,eqTrack_id);
+                                //mainActivity.displayTagId(tagId,fname);
+                                txtTagId.setText("Contact Admin");
+                                //Intent intent = new Intent(MainActivity.this, Register.class);
+                                //intent.putExtra("tagid", tagId);
+                                //startActivity(intent);
+                            }
+                            else if (seatname.equals("null")) {
+                                Log.d("seatloop","seatloop");
                                 //mainActivity.displayTagId(fname+ " " +lname,fname);
                                 Intent intent = new Intent(MainActivity.this, seatbooking.class);
                                 intent.putExtra("tagid", tagId);
-                                intent.putExtra("fname", fname);
-                                intent.putExtra("lname", lname);
+                                intent.putExtra("fname", name);
+
                                 startActivity(intent);
                             }
                             else {
-                                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this); 
+                                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                                String finalSeatname = seatname;
                                 builder.setMessage("Your Current Seat is "+seatname+". Would you like to Logout?").setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
-                                        onLogout(tagId,seatname);
+                                        onLogout(tagId, finalSeatname);
                                         txtTagId.setText("Please Tap Your Pass");
                                     }
                                 }).setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -192,6 +203,42 @@ public class MainActivity extends AppCompatActivity {
                 });
             }
         });
+    }
+
+       /*public void writeNewTag(String tagId, String name, String org, String division, String section, String username,String seatName,String eqtrack_id){
+       // key = mDatabase.child("tag").push().getKey();
+        User user = new User(tagId,name,  org, division, section, username,seatName, eqtrack_id);
+        mDatabase.child(tagId).setValue(user);
+        Map<String, Object> serialValues = serial.toMap();
+
+
+        Map<String, Object> childUpdates = new HashMap<>();
+        //childUpdates.put("/tag/" + key,serialValues);
+        mDatabase.updateChildren(childUpdates);
+
+
+    }*/
+
+    public void writeNewTag(String tagId, String name, String org, String division, String section, String username,String seatName,String eqtrack_id){
+        // key = mDatabase.child("tag").push().getKey();
+        seatName = "null";
+        String key = mDatabase.child("Users").push().getKey();
+        User user = new User(tagId,name,org,division,section,username,seatName,eqtrack_id);
+        Map<String, Object> UserValues = user.toMap();
+         mDatabase.child(tagId).setValue(user);
+
+        Map<String,Object> childUpdates = new HashMap<>();
+        childUpdates.put("/Users/"+tagId,UserValues);
+        mDatabase.updateChildren(childUpdates);
+        // Map<String, Object> serialValues = serial.toMap();
+
+
+
+        //Map<String, Object> childUpdates = new HashMap<>();
+        //childUpdates.put("/tag/" + key,serialValues);
+        //mDatabase.updateChildren(childUpdates);
+
+
     }
 
 

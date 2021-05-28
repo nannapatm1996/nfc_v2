@@ -34,7 +34,7 @@ public class CustomAdapter extends ArrayAdapter<Seat>{
     int custom_layout_id,color, selectedPosition;
     String value,content;
     CheckedTextView textView;
-    Seat se;
+    Seat se ;
     int skyBlue = Color.argb(200,79,223,255);
     private DatabaseReference mDatabase;
     private Map<String, Long> seatFree = new HashMap<>();
@@ -72,7 +72,7 @@ public class CustomAdapter extends ArrayAdapter<Seat>{
 
         // get the item using the  position param
         ReadSeatFirebase();
-        Log.d("global","avail= "+ se.getAvailability());
+       //Log.d("global","avail= "+ se.getAvailability());
 
         Seat seat = seat_list.get(position);
         //Long availability = seat_list.get(position).getAvailability();
@@ -81,35 +81,8 @@ public class CustomAdapter extends ArrayAdapter<Seat>{
         textView.setBackgroundColor(seat.getColor());
         content = textView.getText().toString();
 
-
-
-        //
-/*
-        if(se.getAvailability() == 3L){
-            Log.d("a","is 3");
-            textView.setText(seat.getSeatName());
-            textView.setBackgroundColor(Color.LTGRAY);
-        }
-        else{
-
-        }*/
-
-
-     /*   for (Map.Entry<String, Long> entry: seatFree.entrySet()){
-            // Log.d("SeatAvailable",entry.getKey()+" = "+entry.getValue());
-            seat.setAvailability(entry.getValue());
-            if(content.equals(entry.getKey())){
-                if(entry.getValue() == 3L){
-                    Log.d("readDB","seat not available");
-                    seat_list.get(position);
-                    textView.setBackgroundColor(Color.RED);
-                }
-            }
-            //Log.d("SeatA","avail: "+seat.getAvailability());
-        }*/
-
-        if (selectedPosition != -1)
-            if (selectedPosition == position) {
+        if (selectedPosition != -1 && seat.availability == 0L)
+            if (selectedPosition == position ) {
                 //your drawable code
                 textView.setBackgroundColor(Color.parseColor("#fcba03"));
                 textView.setChecked(true);
@@ -120,10 +93,15 @@ public class CustomAdapter extends ArrayAdapter<Seat>{
                 textView.setBackgroundColor(Color.WHITE);
                 textView.setVisibility(View.GONE);
             }
-            else {
+            else if(seat.availability == 0L){
                 textView.setBackgroundColor(skyBlue);
                 textView.setChecked(false);
                 //your other stuff : changing color etc
+            }
+            else if(seat.availability == 3L){
+                textView.setBackgroundColor(Color.LTGRAY);
+                textView.setChecked(false);
+
             }
         }
 
@@ -144,6 +122,7 @@ public class CustomAdapter extends ArrayAdapter<Seat>{
             public void onDataChange(DataSnapshot dataSnapshot) {
 
                 Seat seat = dataSnapshot.getValue(Seat.class);
+                se = dataSnapshot.getValue(Seat.class);
                 String key = dataSnapshot.getKey();
                 //Map<String, Object> SeatName = (Map<String, Object>) dataSnapshot.child(key).child("SeatName").getValue();
 
@@ -156,15 +135,18 @@ public class CustomAdapter extends ArrayAdapter<Seat>{
                     String deviceId = ds.child("deviceId").getValue(String.class);
                     Log.d("finalSeat", SeatName + avaiability);
 
+                    se.setAvailability(ds.child("availability").getValue(Long.class));
+
                     seatFree.put(SeatName,avaiability);
                     seatDevice.put(SeatName,deviceId);
+
                     //seat.setAvailability(3L);
                     //Log.d("set avail","avail = "+seat.setAvailability(avaiability);)
                     seat.setSeatName(SeatName);
                     seat.setAvailability(avaiability);
-                    se = seat;
+                    //se = seat;
                     //se.availability = seat.getAvailability();
-                    Log.d("Hashmap","seatlist ="+se.getSeatName()+se.getAvailability());
+                    Log.d("Hashmap","seatlist ="+se.getAvailability());
 
 
 

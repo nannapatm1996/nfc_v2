@@ -6,6 +6,7 @@ import android.nfc.Tag;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
@@ -34,8 +35,7 @@ public class NFCCardReader implements NfcAdapter.ReaderCallback {
     private String tagId;
     private String index;
     private Bitmap bmp;
-    private Map<String, Long> seatTest = new HashMap<>();
-    private Map<String, String> seatDevice = new HashMap<>();
+    private String eqtrack_id, org, division=null, section, username, name=" ";
     //private Serial serial;
     public NFCCardReader(MainActivity mainActivity) {
     /*protected void onCreate(Bundle savedInstanceState) {
@@ -54,7 +54,7 @@ public class NFCCardReader implements NfcAdapter.ReaderCallback {
         tagId = bytesToHexString(tag.getId());
         //tagId= getDecimal(tagId);
         //tagId= bytesToDecimal(tag.getId());
-        mainActivity.displayTagId(tagId);
+        mainActivity.displayTagId(tagId,name,division,org, section,eqtrack_id,username);
         findUsername findUsername = new findUsername();
         findUsername.execute("");
 
@@ -81,7 +81,7 @@ public class NFCCardReader implements NfcAdapter.ReaderCallback {
 
     public class findUsername extends AsyncTask<String, Void, String> {
 
-        String id, primarypin, adUser, nameDesc;
+        String id;
 
         @Override
         protected void onPreExecute(){
@@ -100,8 +100,12 @@ public class NFCCardReader implements NfcAdapter.ReaderCallback {
                 ConnectionHelper con = new ConnectionHelper();
                 Connection connect = ConnectionHelper.CONN();
 
-                String query = "select cas_primarypin_ext.x_id, cas_primarypin_ext.primarypin, cat_validation.name, cat_validation.description from cas_primarypin_ext, cat_validation where cas_primarypin_ext.primarypin ="+ "'" +
-                        id + "'"+ "AND cas_primarypin_ext.x_id = cat_validation.id ";
+                //String query = "select cas_primarypin_ext.x_id, cas_primarypin_ext.primarypin, cat_validation.name, cat_validation.description from cas_primarypin_ext, cat_validation where cas_primarypin_ext.primarypin ="+ "'" +
+                //        id + "'"+ "AND cas_primarypin_ext.x_id = cat_validation.id ";
+
+                String query = "select cas_primarypin_ext.primarypin, cat_validation.id,View_UserProfile.ORG, View_UserProfile.DIVISION,View_UserProfile.SECTION, cat_validation.name, cat_validation.description \n" +
+                        "from cas_primarypin_ext, cat_validation, View_UserProfile "+
+                        "where cas_primarypin_ext.primarypin = '"+ id +"' AND cas_primarypin_ext.x_id = cat_validation.id AND cat_validation.name = View_UserProfile.USERID";
 
                 //PreparedStatement preparedStatement = connect.prepareStatement(query);
 
@@ -112,8 +116,21 @@ public class NFCCardReader implements NfcAdapter.ReaderCallback {
                 ResultSet rs = stmt.executeQuery(query);
                 //Log.d("conn_result",rs.getString("x_id"));
                 while(rs.next()){
-                    String re = rs.getString(3);
-                    System.out.println("result "+re);
+                    String result_eqid = rs.getString(2);
+                    String result_name = rs.getString(7);
+                    String result_org = rs.getString(3);
+                    String result_division = rs.getString(4);
+                    String result_section = rs.getString(5);
+                    String result_username = rs.getString(6);
+                    name =result_name;
+                    division = result_division;
+                    org = result_org;
+                    section = result_section;
+                    username = result_username;
+                    eqtrack_id = result_eqid;
+                    System.out.println(result_division +  division);
+
+
                 }
 
                 //preparedStatement.close();
@@ -130,10 +147,40 @@ public class NFCCardReader implements NfcAdapter.ReaderCallback {
         }
         @Override
         protected  void onPostExecute(String result){
+            //name = re_name;
             if(result.equals("successful connection")){
                 Log.d("conn","connection Success");
+                if(name.equals(" ")){
+
+                }
+                else{
+                    String seatname = "null";
+                    writeNewTag(tagId,name,org,division,section,username,seatname,eqtrack_id);
+                }
             }
         }
+    }
+
+    public void writeNewTag(String tagId, String name, String org, String division, String section, String username,String seatName,String eqtrack_id){
+        // key = mDatabase.child("tag").push().getKey();
+        //String seatname = "null";
+        String key = mDatabase.child("Users").push().getKey();
+        User user = new User(tagId,name,org,division,section,username,seatName,eqtrack_id);
+        Map<String, Object> UserValues = user.toMap();
+         mDatabase.child("/Users/"+tagId).setValue(user);
+
+        Map<String,Object> childUpdates = new HashMap<>();
+        childUpdates.put("/Users/"+tagId,UserValues);
+        mDatabase.updateChildren(childUpdates);
+        // Map<String, Object> serialValues = serial.toMap();
+
+
+
+        //Map<String, Object> childUpdates = new HashMap<>();
+        //childUpdates.put("/tag/" + key,serialValues);
+        //mDatabase.updateChildren(childUpdates);
+
+
     }
 
 

@@ -8,6 +8,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.nfc.Model.Seat;
 import com.example.nfc.Model.User;
@@ -21,7 +22,7 @@ public class Register extends AppCompatActivity {
 
     private String firstname, lastname, index,tagid,dept, zone;
     private EditText et_lastname, et_firstname, et_index;
-    private TextView et_tagid;
+    private TextView et_tagid,et_dept;
     private DatabaseReference mDatabase;
     private Button submit;
 
@@ -40,6 +41,7 @@ public class Register extends AppCompatActivity {
         et_firstname = findViewById(R.id.et_Firstname);
         et_lastname = findViewById(R.id.et_lastname);
         et_index = findViewById(R.id.et_index);
+        et_dept = findViewById(R.id.et_department);
         submit = findViewById(R.id.btnSubmit);
         et_tagid.setText(tagid);
 
@@ -50,9 +52,24 @@ public class Register extends AppCompatActivity {
                 firstname = et_firstname.getText().toString();
                 lastname = et_lastname.getText().toString();
                 index = et_index.getText().toString();
+                dept = et_dept.getText().toString();
+                if(dept.equals("EDD") || dept.equals("TD")){
+                    zone = "B";
+                }
+                else if(dept.equals("ED")|| dept.equals("MPFD")){
+                    zone ="A";
+                }
+                else if(dept.equals("SD")||dept.equals("SDD")){
+                    zone = "C";
+                }
+                else{
+                    zone = "No Zone";
+                }
                 String Seat = "null";
-                writeNewTag(index,tagid,firstname,lastname,Seat,dept,zone);
+               // writeNewTag(index,tagid,firstname,lastname,Seat,dept,zone);
                 Intent intent = new Intent(Register.this, MainActivity.class);
+                Toast toast = Toast.makeText(Register.this, "Registration Sucessful",Toast.LENGTH_LONG);
+                toast.show();
                 startActivity(intent);
             }
         });
@@ -63,12 +80,12 @@ public class Register extends AppCompatActivity {
 
     }
 
-    public void writeNewTag(String index, String tagId,String fName, String LName,String Seat,String dept, String zone){
+  /*  public void writeNewTag(String index, String tagId,String fName, String LName,String Seat,String dept, String zone){
         // key = mDatabase.child("tag").push().getKey();
         String key = mDatabase.child("Users").push().getKey();
         User user = new User(index,tagId,fName,LName, Seat,dept,zone);
         Map<String, Object> UserValues = user.toMap();
-       // mDatabase.child(tagId).setValue(user);
+       mDatabase.child(tagId).setValue(user);
 
         Map<String,Object> childUpdates = new HashMap<>();
         childUpdates.put("/Users/"+tagid,UserValues);
@@ -82,7 +99,7 @@ public class Register extends AppCompatActivity {
         //mDatabase.updateChildren(childUpdates);
 
 
-    }
+    }*/
 
     public void writeNewSeat(String SeatName, String deviceId, Long availability) {
         // key = mDatabase.child("tag").push().getKey();

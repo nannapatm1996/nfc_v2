@@ -14,9 +14,10 @@ public class Seat implements Serializable {
     public int Gcolor;
     public boolean isChecked = false;
 
-    public Seat(String seat){
+    public Seat(String seat, Long a){
         seatName = seat;
         //Gcolor = color;
+        availability = a;
 
 
     }
@@ -35,13 +36,15 @@ public class Seat implements Serializable {
     public String getSeatName(){
         return seatName;
     }
-    public int getColor(){
-        return Gcolor;
-    }
 
     public void setSeatName(String SeatName){
         this.seatName = SeatName;
     }
+
+    public int getColor(){
+        return Gcolor;
+    }
+
 
     public String getDeviceId(){
         return deviceId;
@@ -58,6 +61,7 @@ public class Seat implements Serializable {
     public boolean isChecked(){
         return isChecked;
     }
+
     public void setChecked(boolean checked){
         isChecked = checked;
     }

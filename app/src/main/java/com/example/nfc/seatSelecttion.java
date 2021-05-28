@@ -6,6 +6,7 @@ import androidx.cardview.widget.CardView;
 
 import android.content.Intent;
 import android.graphics.Color;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.CalendarContract;
 import android.text.style.BackgroundColorSpan;
@@ -27,8 +28,11 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.example.nfc.Adapter.ConnectionHelper;
 import com.example.nfc.Adapter.CustomAdapter;
 import com.example.nfc.Model.Seat;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -36,6 +40,10 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.database.collection.LLRBNode;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -45,27 +53,21 @@ public class seatSelecttion extends AppCompatActivity {
 
     GridView gridView;
     TextView GridViewItems, backselecteditem;
-    int backposition = -1,state=0;
+    int backposition = -1, state = 0;
     List<Seat> ZoneA = new ArrayList<>();
-    int skyBlue = Color.argb(200,79,223,255);
-    String seatNo, URL, tagId;
+    List<Seat> ZoneB = new ArrayList<>();
+    List<Seat> ZoneC = new ArrayList<>();
+    int skyBlue = Color.argb(200, 79, 223, 255), i = 0;
+    String seatNo, URL, tagId, adUser;
     private DatabaseReference mDatabase;
+    public Map<String, Long> seatFree = new HashMap<>();
+    public Map<String, String> seatDevice = new HashMap<>();
 
     //TextView text = (TextView) findViewById(R.id.txSeatNameView);
     //https://www.youtube.com/watch?v=bff46pNqT8Y
     //https://www.youtube.com/watch?v=K2V6Y7zQ8NU
 
-
-
-    static final String[] ZoneB = new String[]{
-            " ", " ", "B16", "B17",
-            " ", " ", "B14", "B15",
-            "B10", "B11", "B12", "B13",
-            " ", "B9", "B10", "B11",
-            "B5", "B6", "B7", "B8",
-            "B1", "B2", "B3","B4"
-    };
-
+/*
     static final String[] ZoneC = new String[]{
             "C19", "C20", "C21", " ",
             "C17", "C18", " ", " ",
@@ -73,17 +75,12 @@ public class seatSelecttion extends AppCompatActivity {
             "C10", "C11", "C12", "C13",
             "C7", "C8", "C9", " ",
             "C3", "C4", "C5", "C6",
-            "C1", "C2", " "," "
-    };
+            "C1", "C2", " ", " "
+    };*/
 
-/*
-    static final String[] ZoneA = new String[]{
-            "A10", "A11", "A12", "A13",
-            "A6", "A7", "A8", "A9",
-            "A1", "A4", "A5", " ",
-            "A1", "A2", "A3"," "
-    };
-*/
+
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,33 +88,32 @@ public class seatSelecttion extends AppCompatActivity {
         setContentView(R.layout.activity_seat_selecttion);
 
         String zone = getIntent().getStringExtra("zone");
-        int colNum = getIntent().getIntExtra("columnNum",4);
+        int colNum = getIntent().getIntExtra("columnNum", 4);
         tagId = getIntent().getStringExtra("tagId");
         Button btnConfirm = (Button) findViewById(R.id.btnConfirmSeat);
         mDatabase = FirebaseDatabase.getInstance().getReference();
 
-        ZoneA.add(new Seat("G-A10"));
-        ZoneA.add(new Seat("G-A11"));
-        ZoneA.add(new Seat("G-A12"));
-        ZoneA.add(new Seat("G-A13"));
-        ZoneA.add(new Seat("G-A6"));
-        ZoneA.add(new Seat("G-A7"));
-        ZoneA.add(new Seat("G-A8"));
-        ZoneA.add(new Seat("G-A9"));
-        ZoneA.add(new Seat("G-A1"));
-        ZoneA.add(new Seat("G-A4"));
-        ZoneA.add(new Seat("G-A5"));
-        ZoneA.add(new Seat(" "));
-        ZoneA.add(new Seat(" "));
-        ZoneA.add(new Seat("G-A2"));
-        ZoneA.add(new Seat("G-A3"));
-        ZoneA.add(new Seat(" "));
+        ReadSeatFirebase(zone);
+
+
+
+        for (Map.Entry<String, Long> entry : seatFree.entrySet()) {
+            Log.d("hashmapglobal", entry.getKey() + entry.getValue());
+            ZoneA.add(new Seat(entry.getKey(), entry.getValue()));
+
+        }
+
+        //Log.d("seatmap","seatmap: "+seatFree.get("G-A1"));
+        //Log.d("seatmap","seatmap: "+s.getAvailability());
+
 
         gridView = findViewById(R.id.gridView);
         gridView.setNumColumns(4);
 
-        if(zone.equals("A")){
+
+        if (zone.equals("A")) {
             //ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1,ZoneA);
+
 
             CustomAdapter customAdapter = new CustomAdapter(this, R.layout.custom_view, ZoneA);
             gridView.setAdapter(customAdapter);
@@ -133,94 +129,22 @@ public class seatSelecttion extends AppCompatActivity {
                 }
             });
 
-                /*gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        CheckedTextView text = (CheckedTextView) view.findViewById(R.id.txSeatNameView);
+        } else if (zone.equals("B")) {
+            //ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, ZoneB);
+            //gridView.setAdapter(adapter);
 
-                        //String selected_item = parent.getItemAtPosition(position).toString();
-                        //Log.d("select",selected_item);
-                        //.setBackgroundColor(Color.GREEN);
-
-                        Log.d("get","getis: "+text.getText());
-
-                        String content = text.getText().toString();
-
-                        if(state==0){
-                            if(content.equals(" ")){
-
-                            }
-                            else{
-                                text.setBackgroundColor(Color.argb(255,65,186,77));
-                                state=1;
-                                seatNo = content;
-
-
-                            }
-                        }
-                        else if(state==1){
-                            text.setBackgroundColor(Color.argb(200,79,223,255));
-                            state=0;
-
-                        }
-                        else{
-
-                        }
-
-
-                    }
-                });*/
-
-
-            //gridView.getItemAtPosition(10);
-            //Log.d("testgetpo","Postion:"+ gridView.getItemAtPosition(10));
-
-
-          /*  for(int val=0; val<adapter.getPosition(" ");val++){
-                Object obj = adapter.getItem(val);
-                CardView cardView = (CardView) gridView.getChildAt(val);  //to match with context
-                Log.d("CheckFor",obj.toString());
-
-                if (obj.equals(" ")){
-                    adapter.getPosition(" ");
-                    gridView.getPositionForView(gridView);
-                   ///adapter.getView(3,gridView,gridView);
-                    gridView.setBackgroundColor(Color.RED);
-                }
-                else{
-
-                }
-            }*/
-
-
-        }
-        else if(zone.equals("B")){
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1,ZoneB);
-            gridView.setAdapter(adapter);
-
-        }
-        else{
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1,ZoneC);
-            gridView.setAdapter(adapter);
+        } else {
+            //ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, ZoneC);
+            //gridView.setAdapter(adapter);
         }
 
         btnConfirm.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                URL = "http://10.120.51.11/emapp/EMAppServlet?device=SEP64AE0CF72FC7&userid=nannapatm&seq=3690";
-                Log.d("Seat",tagId+seatNo);
-                onSeatSelectSeat(seatNo, 3);
-                onSeatSelectUser(tagId, seatNo);
 
-                //ReadSeatFirebase();
-                //URL = "http://10.120.51.11:8080/emapp/EMAppServlet?device=" + DeviceId + "&userid=nannapatm&seq=3690";
-                SignalPhone(URL);
-                Intent intent = new Intent(seatSelecttion.this, MainActivity.class);
-                startActivity(intent);
+                onLogin(tagId,seatNo);
             }
         });
-
-
 
 
     }
@@ -250,20 +174,21 @@ public class seatSelecttion extends AppCompatActivity {
         queue.add(stringRequest);
     }
 
-    private void onSeatSelectSeat(String SeatNo, int availability){
+
+    private void onSeatSelectSeat(String SeatNo, int availability) {
         Map<String, Object> updates = new HashMap<>();
-        updates.put("availability",availability);
+        updates.put("availability", availability);
         mDatabase.child("Seats").child(SeatNo).updateChildren(updates);
     }
 
-    private void onSeatSelectUser(String tagId, String SeatNo){
+    private void onSeatSelectUser(String tagId, String SeatNo) {
         Map<String, Object> updates = new HashMap<>();
-        updates.put("SeatName",SeatNo);
-        Log.d("SeatChange",SeatNo);
+        updates.put("SeatName", SeatNo);
+        Log.d("SeatChange", SeatNo);
         mDatabase.child("Users").child(tagId).updateChildren(updates);
     }
 
-    /*private void ReadSeatFirebase() {
+    public void ReadSeatFirebase(String zone) {
         DatabaseReference mSnap = FirebaseDatabase.getInstance().getReference().child("Seats");
         mDatabase.child("Seats").addValueEventListener(new ValueEventListener() {
             @Override
@@ -271,41 +196,28 @@ public class seatSelecttion extends AppCompatActivity {
 
                 Seat seat = dataSnapshot.getValue(Seat.class);
                 String key = dataSnapshot.getKey();
+                Map<String, Long> seatAvailabilty = (Map<String, Long>) dataSnapshot.child("availability").getValue();
                 //Map<String, Object> SeatName = (Map<String, Object>) dataSnapshot.child(key).child("SeatName").getValue();
 
-                for(DataSnapshot ds : dataSnapshot.getChildren()){
+                for (DataSnapshot ds : dataSnapshot.getChildren()) {
 
                     Log.d("key", ds.getKey());
+
                     String SeatName = ds.child("SeatName").getValue(String.class);
                     long avaiability = ds.child("availability").getValue(Long.class);
                     String deviceId = ds.child("deviceId").getValue(String.class);
                     Log.d("finalSeat", SeatName + avaiability);
-                    seatTest.put(SeatName,avaiability);
-                    seatDevice.put(SeatName,deviceId);
-                    Log.d("Hashmap","hash "+seatTest);
 
-                    for (Map.Entry<String, Long> entry : seatTest.entrySet()){
-                        Log.d("hashmapfor", entry.getKey()+ entry.getValue());
-                        if(entry.getKey().equals("1A")){
-                            choose1 = entry.getValue();
-                            Log.d("choose1","Choose1: "+choose1);
-                            if(choose1==3L){
-                                img1.setImageResource(R.drawable.kermit_the_frog);
-                                img1.setEnabled(false);
-                            }
-                        }
-                        else{
-                            choose2 = entry.getValue();
-                            Log.d("choose2","Choose2: "+choose2);
-                            if(choose2==3L){
-                                img2.setImageResource(R.drawable.kermit_the_frog);
-                                img2.setEnabled(false);
-                            }
 
-                        }
-                    }
-                    // seat.getAvailability()
+                    seatFree.put(SeatName, avaiability);
+                    seatDevice.put(SeatName, deviceId);
+                    //s.setAvailability(avaiability);
+
                 }
+                Log.d("Hashmap", "hash " + seatFree.get("G-A1"));
+                //Log.d("class","class"+seat.getAvailability());
+                createZone(seatFree,zone);
+
 
             }
 
@@ -314,11 +226,176 @@ public class seatSelecttion extends AppCompatActivity {
 
                 Log.d("TAG", error.getMessage()); //Don't ignore potential errors!
             }
+
         });
-    }*/
+
+    }
+
+    public void createZone(Map<String, Long> seat,String zone) {
+
+        if (zone.equals("A")) {
+            ZoneA.add(new Seat("G-A10", seat.get("G-A10")));
+            ZoneA.add(new Seat("G-A11", seat.get("G-A11")));
+            ZoneA.add(new Seat("G-A12", seat.get("G-A12")));
+            ZoneA.add(new Seat("G-A13", seat.get("G-A13")));
+            ZoneA.add(new Seat("G-A6", seat.get("G-A6")));
+            ZoneA.add(new Seat("G-A7", seat.get("G-A7")));
+            ZoneA.add(new Seat("G-A8", seat.get("G-A8")));
+            ZoneA.add(new Seat("G-A9", seat.get("G-A9")));
+            ZoneA.add(new Seat("G-A1", seat.get("G-A1")));
+            ZoneA.add(new Seat("G-A4", seat.get("G-A4")));
+            ZoneA.add(new Seat("G-A5", seat.get("G-A5")));
+            ZoneA.add(new Seat(" ", 0L));
+            ZoneA.add(new Seat(" ", 0L));
+            ZoneA.add(new Seat("G-A2", seat.get("G-A2")));
+            ZoneA.add(new Seat("G-A3", seat.get("G-A3")));
+            ZoneA.add(new Seat(" ", 0L));
+            CustomAdapter customAdapter = new CustomAdapter(this, R.layout.custom_view, ZoneA);
+            gridView.setAdapter(customAdapter);
+
+            gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    customAdapter.setSelected(position);
+                    CheckedTextView text = (CheckedTextView) view.findViewById(R.id.txSeatNameView);
+                    seatNo = text.getText().toString();
+
+                }
+            });
+
+        } else if (zone.equals("B")) {
+            ZoneB.add(new Seat(" ", 0L));
+            ZoneB.add(new Seat(" ", 0L));
+            ZoneB.add(new Seat("G-B18", seat.get("G-B18")));
+            ZoneB.add(new Seat("G-B19", seat.get("G-B19")));
+            ZoneB.add(new Seat(" ", 0L));
+            ZoneB.add(new Seat(" ", 0L));
+            ZoneB.add(new Seat("G-B16", seat.get("G-B16")));
+            ZoneB.add(new Seat("G-B17", seat.get("G-B17")));
+            ZoneB.add(new Seat("G-B12", seat.get("G-B12")));
+            ZoneB.add(new Seat("G-B13", seat.get("G-B13")));
+            ZoneB.add(new Seat("G-B14", seat.get("G-B14")));
+            ZoneB.add(new Seat("G-B15", seat.get("G-B15")));
+            ZoneB.add(new Seat(" ", 0L));
+            ZoneB.add(new Seat("G-B9", seat.get("G-B9")));
+            ZoneB.add(new Seat("G-B10", seat.get("G-B10")));
+            ZoneB.add(new Seat("G-B11", seat.get("G-B11")));
+            ZoneB.add(new Seat("G-B5", seat.get("G-B5")));
+            ZoneB.add(new Seat("G-B6", seat.get("G-B6")));
+            ZoneB.add(new Seat("G-B7", seat.get("G-B7")));
+            ZoneB.add(new Seat("G-B8", seat.get("G-B8")));
+            ZoneB.add(new Seat("G-B1", seat.get("G-B1")));
+            ZoneB.add(new Seat("G-B2", seat.get("G-B2")));
+            ZoneB.add(new Seat("G-B3", seat.get("G-B3")));
+            ZoneB.add(new Seat("G-B4", seat.get("G-B4")));
+
+            CustomAdapter customAdapter = new CustomAdapter(this, R.layout.custom_view, ZoneB);
+            gridView.setAdapter(customAdapter);
+
+            gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    customAdapter.setSelected(position);
+                    CheckedTextView text = (CheckedTextView) view.findViewById(R.id.txSeatNameView);
+                    seatNo = text.getText().toString();
+
+                }
+            });
+
+        }
+        else if(zone.equals("C")){
+
+        }
+    }
+
+    public class findUsername extends AsyncTask<String, Void, String> {
+
+        String id, primarypin, User, nameDesc;
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            id = tagId;
+        }
+
+        //select cas_primarypin_ext.x_id, cas_primarypin_ext.primarypin, cat_validation.name, cat_validation.description
+        //from cas_primarypin_ext, cat_validation
+        //where cas_primarypin_ext.primarypin = '2218065470' AND cas_primarypin_ext.x_id = cat_validation.id
+
+        @Override
+        protected String doInBackground(String... strings) {
+            String result = null;
+            try {
+                ConnectionHelper con = new ConnectionHelper();
+                Connection connect = ConnectionHelper.CONN();
+
+                String query = "select cas_primarypin_ext.x_id, cas_primarypin_ext.primarypin, cat_validation.name, cat_validation.description from cas_primarypin_ext, cat_validation where cas_primarypin_ext.primarypin =" + "'" +
+                        id + "'" + "AND cas_primarypin_ext.x_id = cat_validation.id ";
+
+                //PreparedStatement preparedStatement = connect.prepareStatement(query);
+
+                //preparedStatement.executeQuery();
+                Log.d("Query", query);
+
+                Statement stmt = connect.createStatement();
+                ResultSet rs = stmt.executeQuery(query);
+                //Log.d("conn_result",rs.getString("x_id"));
+                while (rs.next()) {
+                    String re = rs.getString(3);
+                    result = re;
+                    System.out.println("result " + re);
+                }
+
+                //preparedStatement.close();
+
+                return result;
+            } catch (SQLException e) {
+                e.printStackTrace();
+                return e.getMessage().toString();
+            } catch (Exception e) {
+                return "Exception. Check DB";
+            }
+
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            adUser = result;
+            /*if(result.equals("successful connection")){
+                Log.d("conn","connection Success");
+            }*/
+        }
+    }
+
+    private void onLogin(String tagId, String seatname) {
+        mDatabase.child("Seats").child(seatname).get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DataSnapshot> task) {
+                if (!task.isSuccessful()) {
+                    Log.e("Firebase", "Error getting data", task.getException());
+                } else
+                    {
+                    String value = String.valueOf(task.getResult().getValue());
+                    Log.d("firebase", String.valueOf(task.getResult().getValue()));
+                    String deviceId = String.valueOf(task.getResult().child("deviceId").getValue());
+                    onSeatSelectSeat(seatname, 3);
+                    onSeatSelectUser(tagId, seatname);
+                    Log.d("deviceId", deviceId);
+                    findUsername findUsername = new findUsername();
+                    findUsername.execute("");
+                    //adUser = findUsername.adUser;
+                    Log.d("adUser", "aduser is: " + findUsername.doInBackground(adUser));
+
+                    URL = "http://10.120.51.11:8080/emapp/EMAppServlet?device=" + deviceId + "&userid=" + findUsername.doInBackground(adUser) + "&seq=3690";
+                    SignalPhone(URL);
+                    Intent intent = new Intent(seatSelecttion.this, MainActivity.class);
+                    startActivity(intent);
+
+                }
+
+            }
+        });
 
 
-
-
-
+    }
 }
