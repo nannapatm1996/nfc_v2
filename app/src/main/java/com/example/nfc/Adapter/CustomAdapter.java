@@ -67,16 +67,15 @@ public class CustomAdapter extends ArrayAdapter<Seat>{
 
         // initializing the imageview and textview and
         // setting data
-        //ImageView imageView = v.findViewById(R.id.imageView);
+
         textView = v.findViewById(R.id.txSeatNameView);
 
         // get the item using the  position param
         ReadSeatFirebase();
-       //Log.d("global","avail= "+ se.getAvailability());
+
 
         Seat seat = seat_list.get(position);
-        //Long availability = seat_list.get(position).getAvailability();
-        //imageView.setImageResource(seat.getImage_id());
+
         textView.setText(seat.getSeatName());
         textView.setBackgroundColor(seat.getColor());
         content = textView.getText().toString();
@@ -140,38 +139,11 @@ public class CustomAdapter extends ArrayAdapter<Seat>{
                     seatFree.put(SeatName,avaiability);
                     seatDevice.put(SeatName,deviceId);
 
-                    //seat.setAvailability(3L);
-                    //Log.d("set avail","avail = "+seat.setAvailability(avaiability);)
                     seat.setSeatName(SeatName);
                     seat.setAvailability(avaiability);
-                    //se = seat;
-                    //se.availability = seat.getAvailability();
+                  ;
                     Log.d("Hashmap","seatlist ="+se.getAvailability());
 
-
-
-
-                    /*for (Map.Entry<String, Long> entry : seatTest.entrySet()){
-                        Log.d("hashmapfor", entry.getKey()+ entry.getValue());
-                        if(entry.getKey().equals("1A")){
-                            choose1 = entry.getValue();
-                            Log.d("choose1","Choose1: "+choose1);
-                            if(choose1==3L){
-                                img1.setImageResource(R.drawable.kermit_the_frog);
-                                img1.setEnabled(false);
-                            }
-                        }
-                        else{
-                            choose2 = entry.getValue();
-                            Log.d("choose2","Choose2: "+choose2);
-                            if(choose2==3L){
-                                img2.setImageResource(R.drawable.kermit_the_frog);
-                                img2.setEnabled(false);
-                            }
-
-                        }
-                    }*/
-                    // seat.getAvailability()
                 }
 
             }

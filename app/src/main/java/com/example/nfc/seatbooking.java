@@ -8,6 +8,7 @@ import android.app.Dialog;
 import android.bluetooth.BluetoothClass;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.media.Image;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.util.Log;
@@ -15,6 +16,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -27,11 +29,14 @@ import com.example.nfc.Model.Seat;
 import com.example.nfc.Model.User;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.badge.BadgeUtils;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.shashank.sony.fancygifdialoglib.FancyGifDialog;
+import com.shashank.sony.fancygifdialoglib.FancyGifDialogListener;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -47,7 +52,7 @@ public class seatbooking extends AppCompatActivity {
     private ImageView img1, img2, img3, img4;
     private TextView DeviceId;
     private Long choose1 = 0L, choose2 = 0L, choose3 = 0L, choose4 = 0L;
-    private String URL, tagId,globalDeviceId;
+    private String URL, tagId,globalDeviceId,zone="No Zone",division;
     private DatabaseReference mDatabase;
     private Map<String, Long> seatTest = new HashMap<>();
     private Map<String, String> seatDevice = new HashMap<>();
@@ -58,19 +63,16 @@ public class seatbooking extends AppCompatActivity {
         setContentView(R.layout.activity_seatbooking);
 
         String fname = getIntent().getStringExtra("fname");
-        String lname = getIntent().getStringExtra("lname");
+        //String lname = getIntent().getStringExtra("lname");
+        division = getIntent().getStringExtra("division");
         tagId = getIntent().getStringExtra("tagid");
-        String zone = getIntent().getStringExtra("zone");
+        //String zone = getIntent().getStringExtra("zone");
         mDatabase = FirebaseDatabase.getInstance().getReference();
         AlertDialog.Builder alertBuilder;
 
         TextView txName = (TextView) findViewById(R.id.txName);
-        /*img1 = (ImageView) findViewById(R.id.img1);
-        img2=  (ImageView) findViewById(R.id.img2);
-        img3 = (ImageView) findViewById(R.id.img3);
-        img4 = (ImageView) findViewById(R.id.img4);*/
-        //Button btnconfirmSeat = (Button) findViewById(R.id.btnSubmitSeat);
-        Button btnconfirmSeat = (Button) findViewById(R.id.btnSubmitSeat);
+
+
         Button btnZoneGA = (Button) findViewById(R.id.btnZoneGA);
         Button btnZoneGB = (Button) findViewById(R.id.btnZoneGB);
         Button btnZoneGC = (Button) findViewById(R.id.btnZoneGC);
@@ -78,32 +80,102 @@ public class seatbooking extends AppCompatActivity {
         Button btnZoneMA = (Button) findViewById(R.id.btnZoneMA);
         Button btnZoneMB = (Button) findViewById(R.id.btnZoneMB);
 
+        Button btnMFloor = (Button) findViewById(R.id.btnMFloor);
+        Button btnGFloor = (Button) findViewById(R.id.btnGFloor);
+
+        Button btnCancel = (Button) findViewById(R.id.btnCancelZone);
+
+        ImageView floorplan =(ImageView) findViewById(R.id.imgGFloor);
+        ImageView btnBack = (ImageView) findViewById(R.id.btnBackZone);
+
         btnZoneMA.setVisibility(View.GONE);
         btnZoneMB.setVisibility(View.GONE);
 
-        txName.setText(fname + " " + lname);
-        alertBuilder = new AlertDialog.Builder(this);
-        AlertDialog.Builder builder = new AlertDialog.Builder(seatbooking.this);
-        builder.setMessage("Your recommended zone is: "+zone+" Would you like to proceed to that zone?").setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                Intent intent = new Intent(seatbooking.this, seatSelecttion.class);
-                intent.putExtra("zone", "A");
-                intent.putExtra("columnNum", 4);
-                intent.putExtra("tagId",tagId);
-                startActivity(intent);
-            }
-        }).setNegativeButton("No", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
+        if(division.equals("DA") || division.equals("ED")){
+            zone = "A";
+        }
+        else{
+            zone = "No Zone";
+        }
 
-                //Intent intent = new Intent(MainActivity.this, MainActivity.class);
+
+        btnCancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onBackPressed();
             }
         });
-        AlertDialog alert = builder.create();
-        alert.show();
 
+        txName.setText(fname + " " + division);
+        alertBuilder = new AlertDialog.Builder(this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(seatbooking.this);
+        if(zone.equals("No Zone")){
+
+        }else {
+            new FancyGifDialog.Builder(seatbooking.this)
+                    .setTitle("Suggested Zone")
+                    .setMessage("Your recommended zone is: " + zone + " Would you like to proceed to that zone?")
+                    .setNegativeBtnText("Cancel")
+                    .setPositiveBtnBackground("#FF4081")
+                    .setPositiveBtnText("Ok")
+                    .setNegativeBtnBackground("#FFA9A7A8")
+                    .setGifResource(R.drawable.walking)//Pass your Gif here
+                    .isCancellable(true)
+                    .OnPositiveClicked(new FancyGifDialogListener() {
+                        @Override
+                        public void OnClick() {
+                            Toast.makeText(seatbooking.this, "Ok", Toast.LENGTH_SHORT).show();
+                            Intent intent = new Intent(seatbooking.this, seatSelecttion.class);
+                            intent.putExtra("zone", "A");
+                            intent.putExtra("columnNum", 4);
+                            intent.putExtra("tagId", tagId);
+                            intent.putExtra("division", division);
+                            startActivity(intent);
+
+                        }
+                    })
+                    .OnNegativeClicked(new FancyGifDialogListener() {
+                        @Override
+                        public void OnClick() {
+
+                        }
+                    })
+                    .build();
+        }
+
+
+        btnBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onBackPressed();
+            }
+        });
+
+        btnMFloor.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                floorplan.setImageResource(R.drawable.nssb_floorplan_m);
+                btnZoneGA.setVisibility(View.GONE);
+                btnZoneGB.setVisibility(View.GONE);
+                btnZoneGC.setVisibility(View.GONE);
+
+                btnZoneMA.setVisibility(View.VISIBLE);
+                btnZoneMB.setVisibility(View.VISIBLE);
+            }
+        });
+
+        btnGFloor.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                floorplan.setImageResource(R.drawable.clean_g_floorplan);
+                btnZoneGA.setVisibility(View.VISIBLE);
+                btnZoneGB.setVisibility(View.VISIBLE);
+                btnZoneGC.setVisibility(View.VISIBLE);
+
+                btnZoneMA.setVisibility(View.GONE);
+                btnZoneMB.setVisibility(View.GONE);
+            }
+        });
 
 
         btnZoneGA.setOnClickListener(new View.OnClickListener() {
@@ -113,6 +185,8 @@ public class seatbooking extends AppCompatActivity {
                 intent.putExtra("zone", "A");
                 intent.putExtra("columnNum", 4);
                 intent.putExtra("tagId",tagId);
+                intent.putExtra("division",division);
+                intent.putExtra("name",fname);
                 startActivity(intent);
             }
         });
@@ -137,265 +211,15 @@ public class seatbooking extends AppCompatActivity {
             }
         });
 
-        //Set Up seat 1 time
-        //writeNewSeat("1A", "SEP64AE0CF72FC7", 0);
-        //writeNewSeat("2A", "SEP64AE0CF72FC7", 0);
-        //ReadSeatFirebase();
-
-
-
-
-        //TOGGLE IMAGEVIEW
-       /* img1.setOnClickListener(new View.OnClickListener() {
-            @Override
-
-            public void onClick(View v) {
-                if (choose1 == 0L) {
-                    img1.setImageResource(R.drawable.kermit_the_frog);
-                    choose1 = 1L;
-                } else {
-                    img1.setImageResource(R.drawable.avatar);
-                    choose1 = 0L;
-                }
-
-            }
-        });
-
-
-        img2.setOnClickListener(new View.OnClickListener() {
-            @Override
-
-            public void onClick(View v) {
-                if (choose2 == 0L) {
-                    img2.setImageResource(R.drawable.kermit_the_frog);
-                    choose2 = 1L;
-                }
-                else {
-                    img2.setImageResource(R.drawable.avatar);
-                    choose2 = 0L;
-                }
-
-            }
-        });*/
-
-        /*btnconfirmSeat.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                URL = "http://10.120.51.11/emapp/EMAppServlet?device=" + DeviceId + "&userid=nannapatm&seq=3690";
-
-                //TODO: send to server, set img with choose value = 1 to disable
-
-                if (choose1 == 1L && choose2 == 1L) {
-                    alertBuilder.setMessage("You can only Choose 1 Seat").setNeutralButton("OK", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.cancel();
-                        }
-                    });
-                    AlertDialog alert = alertBuilder.create();
-                    alert.show();
-                } else {
-
-                    if (choose1 == 1L) {
-
-                        String DeviceId = "SEP00279080B309"; //Fetch from db
-                        String SeatNo = "1A";
-
-                        alertBuilder.setMessage(fname + " " + lname + "Your seat is 1A").setNeutralButton("OK", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                //img1.setEnabled(false);
-                                onSeatSelectSeat(SeatNo, 3);
-                                onSeatSelectUser(tagId, SeatNo);
-                                Log.d("Seat",tagId+SeatNo);
-                                //ReadSeatFirebase();
-                                URL = "http://10.120.51.11:8080/emapp/EMAppServlet?device=" + DeviceId + "&userid=nannapatm&seq=3690";
-                                SignalPhone(URL);
-                                Intent intent = new Intent(seatbooking.this, MainActivity.class);
-                                startActivity(intent);
-                            }
-                        });
-                        AlertDialog alert = alertBuilder.create();
-                        alert.show();
-
-                    } else if (choose2 == 1) {
-                        String deviceId = "SEP64AE0CF72FC7"; // TODO: Change DeviceID Here!
-                        String SeatNo = "2A";
-                        alertBuilder.setMessage(fname + " " + lname + " Your seat is 2A").setNeutralButton("OK", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                img2.setEnabled(false);
-                                //TODO: Write to Firebase Tag Seat A1, availability: 0/1
-                                URL = "http://10.120.51.11:8080/emapp/EMAppServlet?device="+deviceId+"&userid=nannapatm&seq=3690";
-                                SignalPhone(URL);
-                                //Todo: Write to Firebase
-                                onSeatSelectSeat(SeatNo, 3);
-                                onSeatSelectUser(tagId, SeatNo);
-                                Intent intent = new Intent(seatbooking.this, MainActivity.class);
-                                startActivity(intent);
-                            }
-                        });
-                        AlertDialog alert = alertBuilder.create();
-                        alert.show();
-
-                    } else {
-                        alertBuilder.setMessage("Please Choose a seat").setNeutralButton("OK", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.cancel();
-                            }
-                        });
-                        AlertDialog alert = alertBuilder.create();
-                        alert.show();
-                    }
-                }
-
-
-            }
-        });*/
-
     }
 
-    //Todo: send to phone
-    private void SignalPhone(String URL) {
-        RequestQueue queue = Volley.newRequestQueue(this);
-        //String url ="https://www.google.com";
-
-// Request a string response from the provided URL.
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, URL,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        // Display the first 500 characters of the response string.
-                        //textView.setText("Response is: "+ response.substring(0,500));
-                        Log.d("VolleySuccess", "Operation Successful");
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                //textView.setText("That didn't work!");
-                Log.e("VolleyError", error.toString());
-            }
-        });
-
-// Add the request to the RequestQueue.
-        queue.add(stringRequest);
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        Intent intent = new Intent(seatbooking.this, MainActivity.class);
+        tagId = "Please Tap your Ground pass";
+        //intent.putExtra("tagId",tagId);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
     }
-
-    public void writeNewSeat(String SeatName, String deviceId, Long availability) {
-        // key = mDatabase.child("tag").push().getKey();
-        //User user = new User(index, tagId, fName, LName, Seat);
-
-        //mDatabase.child("Seat").push().setValue(seat);
-        String key = mDatabase.child("Seats").push().getKey();
-        Seat seat = new Seat(SeatName, deviceId, availability);
-        Map<String, Object> SeatValues = seat.toMap();
-
-        Map<String,Object> childUpdates = new HashMap<>();
-        childUpdates.put("/Seats/"+SeatName,SeatValues);
-        mDatabase.updateChildren(childUpdates);
-
-        //Map<String, Object> userUpdates = new HashMap<>();
-        //userUpdates.put(tagId, Seat);
-        //mDatabase.updateChildren(userUpdates);
-
-        // Map<String, Object> serialValues = serial.toMap();
-    }
-
-    private void onSeatSelectUser(String tagId, String SeatNo){
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("SeatName",SeatNo);
-        Log.d("SeatChange",SeatNo);
-        mDatabase.child("Users").child(tagId).updateChildren(updates);
-    }
-
-    public void writeNewTag(String tagId, String name, String org, String division, String section, String username,String seatName,String eqtrack_id) {
-        // key = mDatabase.child("tag").push().getKey();
-        User user = new User(tagId,name,org,division,section,username,seatName,eqtrack_id);
-        mDatabase.child(tagId).setValue(user);
-        // Map<String, Object> serialValues = serial.toMap();
-
-    }
-        private void onSeatSelectSeat(String SeatNo, int availability){
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("availability",availability);
-        mDatabase.child("Seats").child(SeatNo).updateChildren(updates);
-    }
-
-    private void ReadUser(String tagId){
-        mDatabase.child("Users").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull @NotNull DataSnapshot snapshot) {
-                User user = snapshot.getValue(User.class);
-                String key = snapshot.getKey();
-
-                for (DataSnapshot ds : snapshot.getChildren()){
-
-                }
-
-            }
-
-            @Override
-            public void onCancelled(@NonNull @NotNull DatabaseError error) {
-
-            }
-        });
-    }
-
-    private void ReadSeatFirebase() {
-        DatabaseReference mSnap = FirebaseDatabase.getInstance().getReference().child("Seats");
-        mDatabase.child("Seats").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-
-                Seat seat = dataSnapshot.getValue(Seat.class);
-                String key = dataSnapshot.getKey();
-                //Map<String, Object> SeatName = (Map<String, Object>) dataSnapshot.child(key).child("SeatName").getValue();
-
-                for(DataSnapshot ds : dataSnapshot.getChildren()){
-
-                    Log.d("key", ds.getKey());
-                    String SeatName = ds.child("SeatName").getValue(String.class);
-                    long avaiability = ds.child("availability").getValue(Long.class);
-                    String deviceId = ds.child("deviceId").getValue(String.class);
-                    Log.d("finalSeat", SeatName + avaiability);
-                    seatTest.put(SeatName,avaiability);
-                    seatDevice.put(SeatName,deviceId);
-                    Log.d("Hashmap","hash "+seatTest);
-
-                    /*for (Map.Entry<String, Long> entry : seatTest.entrySet()){
-                        Log.d("hashmapfor", entry.getKey()+ entry.getValue());
-                        if(entry.getKey().equals("1A")){
-                            choose1 = entry.getValue();
-                            Log.d("choose1","Choose1: "+choose1);
-                            if(choose1==3L){
-                                img1.setImageResource(R.drawable.kermit_the_frog);
-                                img1.setEnabled(false);
-                            }
-                        }
-                        else{
-                            choose2 = entry.getValue();
-                            Log.d("choose2","Choose2: "+choose2);
-                            if(choose2==3L){
-                                img2.setImageResource(R.drawable.kermit_the_frog);
-                                img2.setEnabled(false);
-                            }
-
-                        }
-                    }*/
-                   // seat.getAvailability()
-                }
-
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-                Log.d("TAG", error.getMessage()); //Don't ignore potential errors!
-            }
-        });
-    }
-
-
-
-    }
+}

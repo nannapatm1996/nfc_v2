@@ -1,11 +1,13 @@
 package com.example.nfc;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
 import android.content.Intent;
 import android.graphics.Color;
+import android.media.Image;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.CalendarContract;
@@ -18,6 +20,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckedTextView;
 import android.widget.GridView;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -39,6 +42,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.database.collection.LLRBNode;
+import com.shashank.sony.fancygifdialoglib.FancyGifDialog;
+import com.shashank.sony.fancygifdialoglib.FancyGifDialogListener;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -49,6 +54,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import pl.droidsonroids.gif.GifImageView;
+
 public class seatSelecttion extends AppCompatActivity {
 
     GridView gridView;
@@ -58,7 +65,7 @@ public class seatSelecttion extends AppCompatActivity {
     List<Seat> ZoneB = new ArrayList<>();
     List<Seat> ZoneC = new ArrayList<>();
     int skyBlue = Color.argb(200, 79, 223, 255), i = 0;
-    String seatNo, URL, tagId, adUser;
+    String seatNo, URL, tagId, adUser,division,name,zone;
     private DatabaseReference mDatabase;
     public Map<String, Long> seatFree = new HashMap<>();
     public Map<String, String> seatDevice = new HashMap<>();
@@ -87,13 +94,18 @@ public class seatSelecttion extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_seat_selecttion);
 
-        String zone = getIntent().getStringExtra("zone");
-        int colNum = getIntent().getIntExtra("columnNum", 4);
+        zone = getIntent().getStringExtra("zone");
+        //int colNum = getIntent().getIntExtra("columnNum", 4);
         tagId = getIntent().getStringExtra("tagId");
+        name = getIntent().getStringExtra("name");
+        division = getIntent().getStringExtra("division");
+
         Button btnConfirm = (Button) findViewById(R.id.btnConfirmSeat);
+        ImageView btnBack = (ImageView) findViewById(R.id.btnBack);
         mDatabase = FirebaseDatabase.getInstance().getReference();
 
         ReadSeatFirebase(zone);
+
 
 
 
@@ -103,8 +115,6 @@ public class seatSelecttion extends AppCompatActivity {
 
         }
 
-        //Log.d("seatmap","seatmap: "+seatFree.get("G-A1"));
-        //Log.d("seatmap","seatmap: "+s.getAvailability());
 
 
         gridView = findViewById(R.id.gridView);
@@ -112,8 +122,6 @@ public class seatSelecttion extends AppCompatActivity {
 
 
         if (zone.equals("A")) {
-            //ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1,ZoneA);
-
 
             CustomAdapter customAdapter = new CustomAdapter(this, R.layout.custom_view, ZoneA);
             gridView.setAdapter(customAdapter);
@@ -130,8 +138,19 @@ public class seatSelecttion extends AppCompatActivity {
             });
 
         } else if (zone.equals("B")) {
-            //ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, ZoneB);
-            //gridView.setAdapter(adapter);
+            CustomAdapter customAdapter = new CustomAdapter(this, R.layout.custom_view, ZoneB);
+            gridView.setAdapter(customAdapter);
+            //gridView.setChoiceMode(GridView.CHOICE_MODE_SINGLE);
+            //gridView.setChoiceMode(adapter);
+            gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    customAdapter.setSelected(position);
+                    CheckedTextView text = (CheckedTextView) view.findViewById(R.id.txSeatNameView);
+                    seatNo = text.getText().toString();
+
+                }
+            });
 
         } else {
             //ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, ZoneC);
@@ -142,16 +161,58 @@ public class seatSelecttion extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                onLogin(tagId,seatNo);
+
+                new FancyGifDialog.Builder(seatSelecttion.this)
+                        .setTitle("Booking")
+                        .setMessage("Your Confirmed Booking is "+seatNo)
+                        .setNegativeBtnText("Cancel")
+                        .setPositiveBtnBackground("#FF4081")
+                        .setPositiveBtnText("Ok")
+                        .setNegativeBtnBackground("#FFA9A7A8")
+                        .setGifResource(R.drawable.checkmark)//Pass your Gif here
+                        .isCancellable(true)
+                        .OnPositiveClicked(new FancyGifDialogListener() {
+                            @Override
+                            public void OnClick() {
+                                Toast.makeText(seatSelecttion.this,"Ok",Toast.LENGTH_SHORT).show();
+                                onLogin(tagId,seatNo);
+                            }
+                        })
+                        .OnNegativeClicked(new FancyGifDialogListener() {
+                            @Override
+                            public void OnClick() {
+                                Toast.makeText(seatSelecttion.this,"Cancel",Toast.LENGTH_SHORT).show();
+                            }
+                        })
+                        .build();
+
+
             }
         });
 
+        btnBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onBackPressed();
+            }
+        });
 
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        Intent intent = new Intent(seatSelecttion.this, seatbooking.class);
+        intent.putExtra("zone",zone);
+        intent.putExtra("fname",name);
+        intent.putExtra("division",division);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
     }
 
     private void SignalPhone(String URL) {
         RequestQueue queue = Volley.newRequestQueue(this);
-        //String url ="https://www.google.com";
+
 
 // Request a string response from the provided URL.
         StringRequest stringRequest = new StringRequest(Request.Method.POST, URL,
@@ -318,9 +379,7 @@ public class seatSelecttion extends AppCompatActivity {
             id = tagId;
         }
 
-        //select cas_primarypin_ext.x_id, cas_primarypin_ext.primarypin, cat_validation.name, cat_validation.description
-        //from cas_primarypin_ext, cat_validation
-        //where cas_primarypin_ext.primarypin = '2218065470' AND cas_primarypin_ext.x_id = cat_validation.id
+
 
         @Override
         protected String doInBackground(String... strings) {
@@ -332,14 +391,11 @@ public class seatSelecttion extends AppCompatActivity {
                 String query = "select cas_primarypin_ext.x_id, cas_primarypin_ext.primarypin, cat_validation.name, cat_validation.description from cas_primarypin_ext, cat_validation where cas_primarypin_ext.primarypin =" + "'" +
                         id + "'" + "AND cas_primarypin_ext.x_id = cat_validation.id ";
 
-                //PreparedStatement preparedStatement = connect.prepareStatement(query);
-
-                //preparedStatement.executeQuery();
                 Log.d("Query", query);
 
                 Statement stmt = connect.createStatement();
                 ResultSet rs = stmt.executeQuery(query);
-                //Log.d("conn_result",rs.getString("x_id"));
+
                 while (rs.next()) {
                     String re = rs.getString(3);
                     result = re;
@@ -361,9 +417,7 @@ public class seatSelecttion extends AppCompatActivity {
         @Override
         protected void onPostExecute(String result) {
             adUser = result;
-            /*if(result.equals("successful connection")){
-                Log.d("conn","connection Success");
-            }*/
+
         }
     }
 
@@ -395,7 +449,9 @@ public class seatSelecttion extends AppCompatActivity {
 
             }
         });
-
-
     }
+
+
+
+
 }

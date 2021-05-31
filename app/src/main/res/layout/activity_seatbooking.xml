@@ -7,6 +7,18 @@
     android:layout_height="match_parent"
     tools:context=".seatbooking">
 
+    <ImageView
+        android:id="@+id/btnBackZone"
+        android:layout_width="58dp"
+        android:layout_height="36dp"
+        app:layout_constraintBottom_toTopOf="@+id/btnGFloor"
+        app:layout_constraintEnd_toStartOf="@+id/txName"
+        app:layout_constraintHorizontal_bias="0.056"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.132"
+        app:srcCompat="?attr/actionModeCloseDrawable" />
+
     <TextView
         android:id="@+id/txName"
         android:layout_width="202dp"
@@ -32,10 +44,11 @@
         app:layout_constraintVertical_bias="0.165" />
 
     <Button
-        android:id="@+id/btnSubmitSeat"
+        android:id="@+id/btnCancelZone"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Confirm my Seat"
+        android:text="Cancel"
+        android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.971"
@@ -49,10 +62,10 @@
         android:layout_height="317dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.789"
+        app:layout_constraintVertical_bias="0.831"
         app:srcCompat="@drawable/g_floor_clean" />
 
     <Button

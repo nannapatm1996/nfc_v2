@@ -11,9 +11,11 @@ import android.nfc.NfcAdapter;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -28,6 +30,8 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.shashank.sony.fancygifdialoglib.FancyGifDialog;
+import com.shashank.sony.fancygifdialoglib.FancyGifDialogListener;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -39,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
 
     private DatabaseReference mDatabase;
     private String URL;
+
     //public AlertDialog.Builder builder;
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
@@ -48,8 +53,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         mDatabase = FirebaseDatabase.getInstance().getReference();
         AlertDialog.Builder builder;
-
-
 
         enableReaderMode();
 
@@ -72,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void SignalPhone(String URL) {
         RequestQueue queue = Volley.newRequestQueue(this);
-        //String url ="https://www.google.com";
+
 
 // Request a string response from the provided URL.
         StringRequest stringRequest = new StringRequest(Request.Method.POST, URL,
@@ -133,10 +136,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
 
-                //Intent intent = new Intent(MainActivity.this, seatbooking.class);
-                //intent.putExtra("tagid",tagId);
-
-                //String tagid = txtTagId.getText();
                 txtTagId.setText(tagId + name);
 
                 //TODO: change to find in db
@@ -152,18 +151,12 @@ public class MainActivity extends AppCompatActivity {
                             String division = String.valueOf(task.getResult().child("division").getValue());
                             String seatname = String.valueOf(task.getResult().child("SeatName").getValue());
                             String tagId = String.valueOf(task.getResult().child("tagId").getValue());
-                           // String dept = String.valueOf(task.getResult().child("dept").getValue());
-                            //String zone = String.valueOf(task.getResult().child("zone").getValue());
+
                             Log.d("tagid",tagId);
                             if (tagId.equals("null")) {
 
-                                //seatname = "null";
-                                //writeNewTag(tagId,name,org,division,section,username,seatname,eqTrack_id);
-                                //mainActivity.displayTagId(tagId,fname);
                                 txtTagId.setText("Contact Admin");
-                                //Intent intent = new Intent(MainActivity.this, Register.class);
-                                //intent.putExtra("tagid", tagId);
-                                //startActivity(intent);
+
                             }
                             else if (seatname.equals("null")) {
                                 Log.d("seatloop","seatloop");
@@ -171,28 +164,36 @@ public class MainActivity extends AppCompatActivity {
                                 Intent intent = new Intent(MainActivity.this, seatbooking.class);
                                 intent.putExtra("tagid", tagId);
                                 intent.putExtra("fname", name);
-
+                                intent.putExtra("division",division);
                                 startActivity(intent);
                             }
                             else {
-                                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
                                 String finalSeatname = seatname;
-                                builder.setMessage("Your Current Seat is "+seatname+". Would you like to Logout?").setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        onLogout(tagId, finalSeatname);
-                                        txtTagId.setText("Please Tap Your Pass");
-                                    }
-                                }).setNegativeButton("No", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        dialog.cancel();
-                                        txtTagId.setText("Please Tap Your Pass");
-                                        //Intent intent = new Intent(MainActivity.this, MainActivity.class);
-                                    }
-                                });
-                                AlertDialog alert = builder.create();
-                                alert.show();
+                                new FancyGifDialog.Builder(MainActivity.this)
+                                        .setTitle("Logout")
+                                        .setMessage("Your Current Seat is "+seatname+". Would you like to Logout?")
+                                        .setNegativeBtnText("Cancel")
+                                        .setPositiveBtnBackground("#FF4081")
+                                        .setPositiveBtnText("Ok")
+                                        .setNegativeBtnBackground("#FFA9A7A8")
+                                        .setGifResource(R.drawable.logout_gif)//Pass your Gif here
+                                        .isCancellable(true)
+                                        .OnPositiveClicked(new FancyGifDialogListener() {
+                                            @Override
+                                            public void OnClick() {
+                                                Toast.makeText(MainActivity.this,"Ok",Toast.LENGTH_SHORT).show();
+                                                onLogout(tagId, finalSeatname);
+                                                txtTagId.setText("Please Tap Your Pass");
+                                            }
+                                        })
+                                        .OnNegativeClicked(new FancyGifDialogListener() {
+                                            @Override
+                                            public void OnClick() {
+                                                Toast.makeText(MainActivity.this,"Cancel",Toast.LENGTH_SHORT).show();
+                                                txtTagId.setText("Please Tap Your Pass");
+                                            }
+                                        })
+                                        .build();
 
 
                             }
@@ -204,44 +205,27 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+    boolean backpress = false;
+    @Override
+    public void onBackPressed() {
+        if(backpress) {
+            super.onBackPressed();
+            return;
+        }
 
-       /*public void writeNewTag(String tagId, String name, String org, String division, String section, String username,String seatName,String eqtrack_id){
-       // key = mDatabase.child("tag").push().getKey();
-        User user = new User(tagId,name,  org, division, section, username,seatName, eqtrack_id);
-        mDatabase.child(tagId).setValue(user);
-        Map<String, Object> serialValues = serial.toMap();
+        this.backpress = true;
+        Toast.makeText(this, "Press BACK again to Exit", Toast.LENGTH_SHORT).show();
 
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                backpress = true;
+                //finish();
 
-        Map<String, Object> childUpdates = new HashMap<>();
-        //childUpdates.put("/tag/" + key,serialValues);
-        mDatabase.updateChildren(childUpdates);
-
-
-    }*/
-
-    public void writeNewTag(String tagId, String name, String org, String division, String section, String username,String seatName,String eqtrack_id){
-        // key = mDatabase.child("tag").push().getKey();
-        seatName = "null";
-        String key = mDatabase.child("Users").push().getKey();
-        User user = new User(tagId,name,org,division,section,username,seatName,eqtrack_id);
-        Map<String, Object> UserValues = user.toMap();
-         mDatabase.child(tagId).setValue(user);
-
-        Map<String,Object> childUpdates = new HashMap<>();
-        childUpdates.put("/Users/"+tagId,UserValues);
-        mDatabase.updateChildren(childUpdates);
-        // Map<String, Object> serialValues = serial.toMap();
-
-
-
-        //Map<String, Object> childUpdates = new HashMap<>();
-        //childUpdates.put("/tag/" + key,serialValues);
-        //mDatabase.updateChildren(childUpdates);
-
+            }
+        },2000);
 
     }
-
-
 }
 
 

@@ -38,12 +38,10 @@ public class NFCCardReader implements NfcAdapter.ReaderCallback {
     private String eqtrack_id, org, division=null, section, username, name=" ";
     //private Serial serial;
     public NFCCardReader(MainActivity mainActivity) {
-    /*protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.nfccardreader);*/
+
         this.mainActivity = mainActivity;
         mDatabase = FirebaseDatabase.getInstance().getReference();
-       // mainActivity.displayTagId(tagId);
+
 
 
     }
@@ -52,8 +50,7 @@ public class NFCCardReader implements NfcAdapter.ReaderCallback {
     //Display on Current page
     public void onTagDiscovered(Tag tag) {
         tagId = bytesToHexString(tag.getId());
-        //tagId= getDecimal(tagId);
-        //tagId= bytesToDecimal(tag.getId());
+
         mainActivity.displayTagId(tagId,name,division,org, section,eqtrack_id,username);
         findUsername findUsername = new findUsername();
         findUsername.execute("");
@@ -89,9 +86,7 @@ public class NFCCardReader implements NfcAdapter.ReaderCallback {
             id =tagId;
         }
 
-        //select cas_primarypin_ext.x_id, cas_primarypin_ext.primarypin, cat_validation.name, cat_validation.description
-        //from cas_primarypin_ext, cat_validation
-        //where cas_primarypin_ext.primarypin = '2218065470' AND cas_primarypin_ext.x_id = cat_validation.id
+
 
         @Override
         protected String doInBackground(String... strings) {
@@ -100,16 +95,11 @@ public class NFCCardReader implements NfcAdapter.ReaderCallback {
                 ConnectionHelper con = new ConnectionHelper();
                 Connection connect = ConnectionHelper.CONN();
 
-                //String query = "select cas_primarypin_ext.x_id, cas_primarypin_ext.primarypin, cat_validation.name, cat_validation.description from cas_primarypin_ext, cat_validation where cas_primarypin_ext.primarypin ="+ "'" +
-                //        id + "'"+ "AND cas_primarypin_ext.x_id = cat_validation.id ";
 
                 String query = "select cas_primarypin_ext.primarypin, cat_validation.id,View_UserProfile.ORG, View_UserProfile.DIVISION,View_UserProfile.SECTION, cat_validation.name, cat_validation.description \n" +
                         "from cas_primarypin_ext, cat_validation, View_UserProfile "+
                         "where cas_primarypin_ext.primarypin = '"+ id +"' AND cas_primarypin_ext.x_id = cat_validation.id AND cat_validation.name = View_UserProfile.USERID";
 
-                //PreparedStatement preparedStatement = connect.prepareStatement(query);
-
-                //preparedStatement.executeQuery();
                 Log.d("Query",query);
 
                 Statement stmt = connect.createStatement();
@@ -133,7 +123,7 @@ public class NFCCardReader implements NfcAdapter.ReaderCallback {
 
                 }
 
-                //preparedStatement.close();
+
 
                 return "successful connection";
             }
@@ -172,126 +162,9 @@ public class NFCCardReader implements NfcAdapter.ReaderCallback {
         Map<String,Object> childUpdates = new HashMap<>();
         childUpdates.put("/Users/"+tagId,UserValues);
         mDatabase.updateChildren(childUpdates);
-        // Map<String, Object> serialValues = serial.toMap();
-
-
-
-        //Map<String, Object> childUpdates = new HashMap<>();
-        //childUpdates.put("/tag/" + key,serialValues);
-        //mDatabase.updateChildren(childUpdates);
 
 
     }
-
-
-
-
-   /* public void writeNewTag(String index, String tagId,String fName, String LName){
-       // key = mDatabase.child("tag").push().getKey();
-        User user = new User(index,tagId,fName,LName);
-        mDatabase.child(tagId).setValue(user);
-       // Map<String, Object> serialValues = serial.toMap();
-
-
-        //Map<String, Object> childUpdates = new HashMap<>();
-        //childUpdates.put("/tag/" + key,serialValues);
-        //mDatabase.updateChildren(childUpdates);
-
-
-    }*/
-
-/*    private void showData(DataSnapshot dataSnapshot) {
-        for(DataSnapshot ds : dataSnapshot.getChildren()){
-            //Serial tag = new Serial();
-            User user = new User();
-            //tag.setIndex();
-            alarm.setName(ds.child(userID).getValue(Alarm.class).getName()); //set the name
-            alarm.setFormat(ds.child(userID).getValue(Alarm.class).getFormat());
-            alarm.setAddReminder(ds.child(userID).getValue(Alarm.class).getAddReminder());
-//            uInfo.setEmail(ds.child(userID).getValue(UserInformation.class).getEmail()); //set the email
-//            uInfo.setPhone_num(ds.child(userID).getValue(UserInformation.class).getPhone_num()); //set the phone_num
-
-            //display all the information
-          //*  Log.d(TAG, "showData: name: " + alarm.getName());
-            Log.d(TAG, "showData: format: " + alarm.getFormat());
-            Log.d(TAG, "showData: Reminder "+ alarm.getAddReminder());
-//            Log.d(TAG, "showData: phone_num: " + uInfo.getPhone_num());
-
-        }
-    }*/
-
-    public void writeNewSeat(String SeatName, String deviceId, Long availability) {
-        // key = mDatabase.child("tag").push().getKey();
-        //User user = new User(index, tagId, fName, LName, Seat);
-
-        //mDatabase.child("Seat").push().setValue(seat);
-        String key = mDatabase.child("Seats").push().getKey();
-        Seat seat = new Seat(SeatName, deviceId, availability);
-        Map<String, Object> SeatValues = seat.toMap();
-
-        Map<String, Object> childUpdates = new HashMap<>();
-        childUpdates.put("/Users/" + key, SeatValues);
-        mDatabase.updateChildren(childUpdates);
-    }
-
-/*    private void ReadUserFirebase() {
-
-        DatabaseReference mSnap = FirebaseDatabase.getInstance().getReference().child("Users");
-        mDatabase.child("Users").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-
-                Seat seat = dataSnapshot.getValue(Seat.class);
-                String key = dataSnapshot.getKey();
-                //Map<String, Object> SeatName = (Map<String, Object>) dataSnapshot.child(key).child("SeatName").getValue();
-
-                for(DataSnapshot ds : dataSnapshot.getChildren()){
-
-                    Log.d("key", ds.getKey());
-                    String SeatName = ds.child("SeatName").getValue(String.class);
-                    //long avaiability = ds.child("availability").getValue(Long.class);
-                    //String deviceId = ds.child("deviceId").getValue(String.class);
-                    //Log.d("finalSeat", SeatName + avaiability);
-                    //seatTest.put(SeatName,avaiability);
-                    //seatDevice.put(SeatName,deviceId);
-                   // Log.d("Hashmap","hash "+seatTest);
-
-                    for (Map.Entry<String, Long> entry : seatTest.entrySet()){
-                        Log.d("hashmapfor", entry.getKey()+ entry.getValue());
-                        if(entry.getKey().equals("1A")){
-                            choose1 = entry.getValue();
-                            Log.d("choose1","Choose1: "+choose1);
-                            if(choose1==3L){
-                                img1.setImageResource(R.drawable.kermit_the_frog);
-                                img1.setEnabled(false);
-                            }
-                        }
-                        else{
-                            choose2 = entry.getValue();
-                            Log.d("choose2","Choose2: "+choose2);
-                            if(choose2==3L){
-                                img2.setImageResource(R.drawable.kermit_the_frog);
-                                img2.setEnabled(false);
-                            }
-
-                        }
-                    }
-                    // seat.getAvailability()
-                }
-
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-                Log.d("TAG", error.getMessage()); //Don't ignore potential errors!
-            }
-        });
-    }*/
-
-
-
-
 
 
 }
